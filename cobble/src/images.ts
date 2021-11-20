@@ -49,7 +49,6 @@ export const images = [
   "face-smile-wink.svg",
   "face-surprise.svg",
   "face-tired.svg",
-  "flag.svg",
   "floppy-disk.svg",
   "folder-open.svg",
   "folder.svg",
