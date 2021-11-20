@@ -1,26 +1,34 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { subscribers, send } from "./WebSocket";
-  let isRoom = false;
+  let showStartButton = false;
 
   import Card from "./card.svelte";
   onMount(() => {
-    isRoom = window.location.hash.endsWith("room");
+    const isRoom = window.location.hash.endsWith("room");
+    if (isRoom) {
+      send("addRoom");
+    } else {
+      send("addPlayer");
+    }
+    showStartButton = isRoom;
   });
   subscribers.push((message) => {
     if (!isNaN(parseInt(message.data, 10))) {
       numPlayers = parseInt(message.data, 10);
     }
+    if (message.data[0] === "[") {
+      showStartButton = false;
+    }
   });
   function startGame() {
     send("start");
-    isRoom = false;
   }
   let numPlayers = 0;
 </script>
 
 <div class="center">
-  {#if isRoom}
+  {#if showStartButton}
     <div class="center-text">
       <p>{numPlayers} devices connected</p>
       <button on:click={startGame}>Start game!</button>

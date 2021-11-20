@@ -2,13 +2,13 @@ import { CARDS } from "./cards.ts";
 console.log(CARDS);
 const deck = shuffled(CARDS);
 let topCard: Set<number>;
-let roomSocket: WebSocket;
 type Player = {
   socket: WebSocket;
   score: number;
-  card: Set<number>;
+  card?: Set<number>;
 };
 let players: Player[] = [];
+let rooms: WebSocket[] = [];
 
 const USE_TLS = await Deno.realPath(".").then((path) =>
   path.includes("/var/www")
@@ -59,25 +59,32 @@ function handle(req: Request) {
   }
   const { socket, response } = Deno.upgradeWebSocket(req);
   socket.onopen = () => {
-    const player: Player = { socket: socket, score: 0, card: new Set() };
+    const player: Player = { socket: socket, score: 0 };
     console.log("socket opened");
     socket.onmessage = (e) => {
       console.log("got", e.data);
-      if (e.data === "start") {
-        roomSocket = socket;
+      if (e.data === "addPlayer") {
+        if (topCard != null) {
+          player.card = deck.pop()!;
+          socket.send(serializeCard(player.card));
+        }
+        players.push(player);
+      } else if (e.data === "addRoom") {
+        rooms.push(socket);
+        if (topCard != null) {
+          socket.send(serializeCard(topCard));
+        }
+      } else if (e.data === "start") {
         console.log("Setting roomSocket");
         topCard = deck.pop()!;
-        roomSocket.send(serializeCard(topCard));
+        rooms.forEach((room) => room.send(serializeCard(topCard)));
         for (const player of players) {
-          if (player.socket !== roomSocket) {
-            player.card = deck.pop()!;
-            player.socket.send(serializeCard(player.card));
-          }
+          player.card = deck.pop()!;
+          player.socket.send(serializeCard(player.card));
         }
-      }
-      if (topCard.has(parseInt(e.data, 10))) {
+      } else if (topCard && topCard.has(parseInt(e.data, 10)) && player.card) {
         topCard = player.card;
-        roomSocket.send(serializeCard(topCard));
+        rooms.forEach((room) => room.send(serializeCard(topCard)));
         const newCard = deck.pop();
 
         for (const player of players) {
@@ -96,17 +103,18 @@ function handle(req: Request) {
         e instanceof ErrorEvent ? e.message : ""
       );
       players = players.filter((p) => p.socket !== socket);
+      rooms = rooms.filter((r) => r !== socket);
       for (const player of players) {
         player.socket.send(JSON.stringify(players.length - 1));
       }
     };
     socket.onclose = () => {
       players = players.filter((p) => p.socket !== socket);
+      rooms = rooms.filter((r) => r !== socket);
       for (const player of players) {
         player.socket.send(JSON.stringify(players.length - 1));
       }
     };
-    players.push(player);
     for (const player of players) {
       player.socket.send(JSON.stringify(players.length - 1));
     }
