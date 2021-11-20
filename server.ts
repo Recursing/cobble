@@ -17,8 +17,17 @@ for await (const conn of listener) {
 
 async function handleConn(conn: Deno.Conn) {
   const httpConn = Deno.serveHttp(conn);
-  for await (const e of httpConn) {
-    e.respondWith(handle(e.request));
+  while (true) {
+    try {
+      const requestEvent = await httpConn.nextRequest();
+      if (requestEvent === null) {
+        console.error({ requestEvent });
+        continue;
+      }
+      requestEvent.respondWith(handle(requestEvent.request));
+    } catch (error) {
+      console.error(error);
+    }
   }
 }
 
