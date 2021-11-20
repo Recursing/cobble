@@ -33,7 +33,7 @@ async function handleConn(conn: Deno.Conn) {
       const requestEvent = await httpConn.nextRequest();
       if (requestEvent === null) {
         console.error({ requestEvent });
-        continue;
+        return;
       }
       requestEvent.respondWith(handle(requestEvent.request));
     } catch (error) {
