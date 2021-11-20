@@ -10,7 +10,18 @@ type Player = {
 };
 let players: Player[] = [];
 
-const listener = Deno.listen({ port: 8000 });
+const USE_TLS = await Deno.realPath(".").then((path) =>
+  path.includes("/var/www")
+);
+
+const listener = USE_TLS
+  ? Deno.listenTls({
+      port: 8000,
+      certFile: "cert.pem",
+      keyFile: "privkey.pem",
+    })
+  : Deno.listen({ port: 8000 });
+
 for await (const conn of listener) {
   await handleConn(conn);
 }
