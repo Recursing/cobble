@@ -30,7 +30,7 @@
 <div class="center">
   {#if showStartButton}
     <div class="center-text">
-      <p>{numPlayers} devices connected</p>
+      <p>{numPlayers} players connected</p>
       <button on:click={startGame}>Start game!</button>
     </div>
   {/if}

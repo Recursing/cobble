@@ -69,13 +69,15 @@ function handle(req: Request) {
           socket.send(serializeCard(player.card));
         }
         players.push(player);
+        for (const roomSocket of rooms) {
+          roomSocket.send(JSON.stringify(players.length));
+        }
       } else if (e.data === "addRoom") {
         rooms.push(socket);
         if (topCard != null) {
           socket.send(serializeCard(topCard));
         }
       } else if (e.data === "start") {
-        console.log("Setting roomSocket");
         topCard = deck.pop()!;
         rooms.forEach((room) => room.send(serializeCard(topCard)));
         for (const player of players) {
@@ -104,19 +106,19 @@ function handle(req: Request) {
       );
       players = players.filter((p) => p.socket !== socket);
       rooms = rooms.filter((r) => r !== socket);
-      for (const player of players) {
-        player.socket.send(JSON.stringify(players.length - 1));
+      for (const roomSocket of rooms) {
+        roomSocket.send(JSON.stringify(players.length));
       }
     };
     socket.onclose = () => {
       players = players.filter((p) => p.socket !== socket);
       rooms = rooms.filter((r) => r !== socket);
-      for (const player of players) {
-        player.socket.send(JSON.stringify(players.length - 1));
+      for (const roomSocket of rooms) {
+        roomSocket.send(JSON.stringify(players.length));
       }
     };
-    for (const player of players) {
-      player.socket.send(JSON.stringify(players.length - 1));
+    for (const roomSocket of rooms) {
+      roomSocket.send(JSON.stringify(players.length));
     }
   };
   return response;
