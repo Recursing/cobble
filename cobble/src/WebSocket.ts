@@ -1,5 +1,5 @@
 const protocol = window.location.hostname === "localhost" ? "ws" : "wss";
-const ws = new WebSocket(`${protocol}://${window.location.hostname}:8123`);
+const ws = new WebSocket(`${protocol}://${window.location.hostname}:8000`);
 export const subscribers: CallableFunction[] = [];
 export function send(data: string) {
   ws.send(data);

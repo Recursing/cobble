@@ -10,7 +10,7 @@ type Player = {
 };
 let players: Player[] = [];
 
-const listener = Deno.listen({ port: 8123 });
+const listener = Deno.listen({ port: 8000 });
 for await (const conn of listener) {
   await handleConn(conn);
 }
